@@ -68,7 +68,7 @@ def llm_insight_inference(answer: str) -> str:
 
 
 # Function for generation of conversation between the two LLMs
-def generate(initial_prompt: str, rounds=7) -> list[str]:
+def generate(initial_prompt: str, rounds) -> list[str]:
     init()
     
     # Store current prompt and insight
