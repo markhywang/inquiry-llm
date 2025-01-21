@@ -21,6 +21,7 @@ pipreqs==0.4.13
 psycopg2==2.9.7
 psycopg2-binary==2.9.7
 pycparser==2.21
+python-dotenv==1.0.1
 PySocks==1.7.1
 requests==2.31.0
 selenium==4.11.2

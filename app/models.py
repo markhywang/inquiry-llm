@@ -10,11 +10,6 @@ class Inquiry(models.Model):
         default=None
     )
     
-    images = models.ImageField(
-        default=None,
-        upload_to='media/'
-    )
-    
     rounds = models.IntegerField(
         default=1
     )
@@ -26,7 +21,6 @@ class Inquiry(models.Model):
         return {
             "id" : self.inquiry_id,
             "prompt" : self.prompt,
-            "images" : self.images,
             "rounds" : self.rounds
         }
   

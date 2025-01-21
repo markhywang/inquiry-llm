@@ -12,15 +12,19 @@
     <h2>Learn through AI-powered insights that will enhance your understanding of any topic.</h2>
 
     <div class="prompt-div mx-auto col-10 col-md-8 col-lg-6">
-        <form class="custom-form" id="inquiry-form" action="{% url 'generate' %}" method="POST">
+        <form class="custom-form" id="inquiry-form">
             {% csrf_token %}
 
             <div class="row mb-3" style="margin-bottom: 15px !important">
                 <textarea class="prompt-area form-control" rows="15" placeholder="Enter inquiry (e.g. what is wave-particle duality in quantum mechanics?)" name="body" id="inquiry-content"></textarea>
             </div>
 
+            <div class="alert row mb-3" style="display: none; text-align: left;" id="alert-message">
+                <strong>Please enter an inquiry.</strong>
+            </div>
+
             <div>
-                <label class="col-sm-2 col-form-label" style="display: inline-block; text-align: center"><p>Number of insights: </p></label>
+                <label class="col-sm-2 col-form-label" style="display: inline-block; text-align: center"><p>Insights: </p></label>
 
                 <label class="radio-inline">
                     <input class="radio-input" type="radio" name="num-insights" value="1" checked>1
@@ -37,5 +41,12 @@
 
             <button type="submit" class="gen-button" style="width: 200px; height: 65px;"><b>Generate</b></button>
         </form>
+    </div>
+
+    <div class="container" id="generate-display">
+    </div>
+
+    <div style="margin-bottom: 75px;">
+        <button class="gen-button" id="new-inquiry" style="display: none; width: 200px; height: 65px;"><b>New Inquiry</b></button>
     </div>
 {% endblock %}

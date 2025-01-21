@@ -1,8 +1,13 @@
-import openai
-from .models import *
+from openai import OpenAI
+from .models import Response
+from dotenv import dotenv_values
 
 # Please enter an OpenAI API key here in order to use this application
-openai.api_key = "[ENTER API KEY NAME HERE]"
+CONFIG = dotenv_values(".env")
+client = OpenAI(
+    # defaults to os.environ.get("OPENAI_API_KEY")
+    api_key=CONFIG['OPENAI_API_KEY'],
+)
 
 # Keep track of all messages to make GPT remember conversational history
 llm_answer_messages = []
@@ -31,8 +36,8 @@ def llm_answer_inference(question: str) -> str:
     """This LLM answers questions either given by the user or by the other LLM"""
     llm_answer_messages.append({"role": "user", "content": question}) # Store question into LLM messages
     
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
         messages=llm_answer_messages
     )
     
@@ -52,8 +57,8 @@ def llm_insight_inference(answer: str) -> str:
     insight_message = f"Here is an answer to consider when generating insightful and thought-provoking follow-up questions: {answer}"
     llm_insight_messages.append({"role": "user", "content": insight_message}) # Store question into LLM messages
     
-    response = openai.ChatCompletion.create(
-        model="gpt-4-turbo", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
+    response = client.chat.completions.create(
+        model="gpt-4o-mini", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
         messages=llm_insight_messages
     )
     
@@ -68,7 +73,7 @@ def llm_insight_inference(answer: str) -> str:
 
 
 # Function for generation of conversation between the two LLMs
-def generate(initial_prompt: str, rounds) -> list[str]:
+def generate_responses(initial_prompt: str, rounds) -> list[str]:
     init()
     
     # Store current prompt and insight
@@ -86,8 +91,8 @@ def generate(initial_prompt: str, rounds) -> list[str]:
             responses.append(current_prompt)
             
     # The last two rounds consists of one LLM thanking the other for answering the questions then closing off
-    thank_you_message = openai.ChatCompletion.create(
-        model="gpt-4-turbo", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
+    thank_you_message = client.chat.completions.create(
+        model="gpt-4o-mini", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
         messages=[
             {"role": "system", "content": "You are an AI that thanks and appreciates the other AI for answering all of your inquiries."},
             {"role": "user", "content": llm_answer_messages[-1]} # Get the last answer message
@@ -96,8 +101,8 @@ def generate(initial_prompt: str, rounds) -> list[str]:
     thank_you_message = thank_you_message['choices'][0]['message']['content'].strip()
     responses.append(thank_you_message)
     
-    closing_message = openai.ChatCompletion.create(
-        model="gpt-4-turbo", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
+    closing_message = client.chat.completions.create(
+        model="gpt-4o-mini", # Can also used GPT-4, but GPT-4 Turbo is more lightweight and cost-efficient
         messages=[
             {"role": "system", "content": "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully."},
             {"role": "user", "content": thank_you_message} # Get the last answer message
