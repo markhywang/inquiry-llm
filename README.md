@@ -4,6 +4,8 @@
 
 The process starts with the user asking a question on a specific subject (e.g., math, physics, philosophy). LLM A responds with a thoughtful and accurate answer, and LLM B follows up with an insightful, probing question or comment that deepens the discussion. Then, LLM A answers LLM B's new inquiry thoroughly, and this process continues. This back-and-forth exchange simulates a true Socratic dialogue, encouraging exploration and critical thinking to understand any concept at a much deeper level.
 
+Inquiry LLM was written using HTML/CSS, Django, and vanilla JavaScript. The application uses pre-trained LLM models using [OpenAI](https://github.com/OPENAI) API.
+
 ## Why Inquiry LLM?
 Inquiry LLM stands out as a unique educational tool that transforms passive information retrieval into an active learning process. Whether you're exploring new concepts or diving deeper into familiar topics, Inquiry LLM ensures every interaction is insightful, engaging, and rewarding.
 
