@@ -22,3 +22,6 @@ Some features I plan to add are as follows:
 - Interactive visualizations throughout the dialogue, which includes the incorporation of diagrams, graphs, charts, etc. when necessary.
 - Conversation summarization
 - Random topic suggestions for people with a strong thirst for knowledge :)
+
+![alt text](https://github.com/markhywang/inquiry-llm/blob/master/assets/dev-screenshot.PNG)
+An early-stage development screenshot
