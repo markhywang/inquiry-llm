@@ -25,7 +25,7 @@ Some features I plan to add are as follows:
 - Conversation summarization
 - Random topic suggestions for people with a strong thirst for knowledge :)
 
-## Getting started
+## Getting Started
 1. In terminal, ```git clone``` the contents of ```https://github.com/markhywang/inquiry-llm```.
 2. Ensure all the necessary packages from the ```requirements.txt``` file are installed properly.
 3. In terminal, ```cd``` into the main directory of the cloned repository.
