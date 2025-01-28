@@ -33,6 +33,3 @@ Some features I plan to add are as follows:
 5. Enter the command ```python manage.py migrate``` to apply migrations to your local SQL database.
 6. Create a ```.env``` file and insert (1) an [OpenAI API Key](https://openai.com/index/openai-api/) as well as (2) the value for ```SECRET_KEY``` located inside ```inquiry_llm/settings.py```.
 7. Enter the command ```python manage.py runserver``` to run the server locally.
-
-![alt text](https://github.com/markhywang/inquiry-llm/blob/master/assets/dev-screenshot.PNG)
-An early-stage development screenshot
