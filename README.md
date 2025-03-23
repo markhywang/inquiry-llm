@@ -29,7 +29,7 @@ Some features I plan to add are as follows:
 1. In terminal, ```git clone``` the contents of ```https://github.com/markhywang/inquiry-llm```.
 2. Ensure all the necessary packages from the ```requirements.txt``` file are installed properly.
 3. In terminal, ```cd``` into the main directory of the cloned repository.
-4. Enter the command ```python manage.py makemigrations website``` to make migrations for the app.
+4. Enter the command ```python manage.py makemigrations app``` to make migrations for the app.
 5. Enter the command ```python manage.py migrate``` to apply migrations to your local SQL database.
 6. Create a ```.env``` file and insert (1) an [OpenAI API Key](https://openai.com/index/openai-api/) as well as (2) the value for ```SECRET_KEY``` located inside ```inquiry_llm/settings.py```.
 7. Enter the command ```python manage.py runserver``` to run the server locally.
