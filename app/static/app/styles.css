@@ -33,6 +33,7 @@ label:has([type=radio]) {
 
 label:has([type=radio]:not(:disabled)) {
     cursor: pointer;
+    border: 2px solid black;
 }
 
 [type=radio] {
@@ -40,19 +41,19 @@ label:has([type=radio]:not(:disabled)) {
     width: 1.4rem;
     height: 1.4rem;
     flex: 0 0 auto;
-    border: inherit;
+    border: 2px solid black;
     border-radius: inherit;
 }
 
 label:has([type=radio]:checked) {
-    border-color: #14bf8b;
-    background-color: #14bf8b;
+    border-color: black;
+    background-color: black;
     color: #fff;
 }
 
 [type=radio]:checked {
     border-color: transparent;
-    background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><polyline points="0.15,0.5 0.4,0.75 0.85,0.25" style="fill:none;stroke:%2314bf8b;stroke-linecap:round;stroke-width:0.15;"/></svg>') no-repeat 50% / 1rem;
+    background: #fff url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><polyline points="0.15,0.5 0.4,0.75 0.85,0.25" style="fill:none;stroke:%23000000;stroke-linecap:round;stroke-width:0.15;"/></svg>') no-repeat 50% / 1rem;
 }
 
 .radio-input {
