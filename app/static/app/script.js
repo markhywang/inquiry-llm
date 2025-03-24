@@ -41,9 +41,13 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data =>  {
                 // Display screen on text
                 for (let i = 0; i < data.responses.length; i++) {
-                    const rawText = data.responses[i];  // Store raw text
+                    let rawText = data.responses[i];  // Store raw text
                     let cardClass = (i % 2 == 0) ? "answer-card" : "inquiry-card";
                     let modelName = (i % 2 == 0) ? "LLM A" : "LLM B";
+
+                    // Ensure LaTeX is properly wrapped if necessary
+                    rawText = rawText.replace(/\$\$(.*?)\$\$/g, "<span class='math'>$$$1$$</span>"); // Block math
+                    rawText = rawText.replace(/\\\((.*?)\\\)/g, "<span class='math'>\\($1\\)</span>"); // Inline math
 
                     generateDisplay.innerHTML += `
                         <div class="card ${cardClass}" style="display: none;">
@@ -74,8 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 element.innerHTML = formattedText.substring(0, index + 1); // Render as HTML
                 index++;
                 setTimeout(typing, 5); // Typing speed in milliseconds
-            } else if (callback) {
-                callback(); // Call the next typing action once done
+            } else {
+                // Ensure LaTeX is properly rendered once typing completes
+                renderMathInElement(document.body);
+
+                if (callback) {
+                    callback(); // Call the next typing action once done
+                }
             }
         };
 

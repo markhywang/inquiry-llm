@@ -21,8 +21,8 @@ def init() -> None:
     llm_insight_messages = []
     responses = []
     
-    llm_answer_role = "You are an AI that answers questions concisely and accurately while also being thorough in your explanations. Ensure the output doesn't exceed 1000 characters."
-    llm_insight_role = "You are an AI that responds with insightful and thought-provoking follow-up questions or comments to deepen the understanding of a certain topic. Ensure the output doesn't exceed 1000 characters."
+    llm_answer_role = "You are an AI that answers questions concisely and accurately while also being thorough in your explanations. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+    llm_insight_role = "You are an AI that responds with insightful and thought-provoking follow-up questions or comments to deepen the understanding of a certain topic. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
     
     llm_answer_messages.append({"role": "system", "content": llm_answer_role})
     llm_insight_messages.append({"role": "system", "content": llm_insight_role})
@@ -85,7 +85,7 @@ def generate_responses(initial_prompt: str, rounds) -> list[str]:
     thank_you_message = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an AI that thanks and appreciates the other AI for answering all of your inquiries. Ensure the output doesn't exceed 1000 characters."},
+            {"role": "system", "content": "You are an AI that thanks and appreciates the other AI for answering all of your inquiries. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."},
             {"role": "user", "content": llm_answer_messages[-1]["content"]}
         ]
     )
@@ -95,7 +95,7 @@ def generate_responses(initial_prompt: str, rounds) -> list[str]:
     closing_message = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully. Ensure the output doesn't exceed 1000 characters."},
+            {"role": "system", "content": "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."},
             {"role": "user", "content": thank_you_text}
         ]
     )
