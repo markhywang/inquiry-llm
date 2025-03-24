@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
         var errorMessage = document.getElementById('alert-message');
 
         if (!content.value.trim()) {
-            console.log("Form submitted incorrectly.")
+            console.log("Form submitted incorrectly.");
             content.style.borderColor = 'red';
             errorMessage.style.display = 'block';
         } else {
@@ -26,11 +26,12 @@ document.addEventListener('DOMContentLoaded', () => {
             newInquiry.style.display = 'none';
             generateDisplay.innerHTML = "";
 
-            console.log(`Content: ${content.value}`)
-            console.log(`numInsights: ${numInsights}`)
+            console.log(`Content: ${content.value}`);
+            console.log(`numInsights: ${numInsights}`);
 
             fetch('/generate', {
                 method: 'POST',
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     content: content.value,
                     numInsights: numInsights
@@ -40,12 +41,18 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data =>  {
                 // Display screen on text
                 for (let i = 0; i < data.responses.length; i++) {
-                    if (i % 2 == 0) {
-                        generateDisplay.innerHTML += `<div class="card answer-card" style="display: none;"><h2>LLM A</h2><p data-text="${data.responses[i]}"></p></div>`
-                    } else {
-                        generateDisplay.innerHTML += `<div class="card inquiry-card" style="display: none;"><h2>LLM B</h2><p data-text="${data.responses[i]}"></p></div>`
-                    }
+                    const rawText = data.responses[i];  // Store raw text
+                    let cardClass = (i % 2 == 0) ? "answer-card" : "inquiry-card";
+                    let modelName = (i % 2 == 0) ? "LLM A" : "LLM B";
+
+                    generateDisplay.innerHTML += `
+                        <div class="card ${cardClass}" style="display: none;">
+                            <h2>${modelName}</h2>
+                            <p data-text="${encodeURIComponent(rawText)}"></p>
+                        </div>`;
                 }
+
+                renderMathInElement(document.body);
 
                 let cards = document.querySelectorAll(".card");
                 typeSequentially(cards);
@@ -57,14 +64,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Typing animation for each LLM card
-    const typeText = (element, text, callback) => {
+    const typeText = (element, rawText, callback) => {
         let index = 0;
+        const decodedText = decodeURIComponent(rawText); // Decode special characters
+        const formattedText = marked.parse(decodedText); // Convert Markdown to HTML
 
         const typing = () => {
-            if (index < text.length) {
-                element.textContent += text[index];
+            if (index < formattedText.length) {
+                element.innerHTML = formattedText.substring(0, index + 1); // Render as HTML
                 index++;
-                setTimeout(typing, 10); // Typing speed in milliseconds
+                setTimeout(typing, 5); // Typing speed in milliseconds
             } else if (callback) {
                 callback(); // Call the next typing action once done
             }
@@ -79,13 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const currentCard = cards[index];
         const textElement = currentCard.querySelector("p");
-        const text = textElement.getAttribute("data-text");
+        const rawText = textElement.getAttribute("data-text");
 
         // Show the current card
         currentCard.style.display = "block";
 
         // Start typing the text for the current card
-        typeText(textElement, text, () => typeSequentially(cards, index + 1));
+        typeText(textElement, rawText, () => typeSequentially(cards, index + 1));
     };
 
     // When "New Inquiry" button is clicked, refresh to a clean index.html
