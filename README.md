@@ -1,6 +1,6 @@
 # Inquiry LLM  
 
-https://github.com/markhywang/inquiry-llm/blob/master/assets/demo-video.mp4
+https://github.com/user-attachments/assets/f7dc4ef4-67bf-485d-a060-8ae84f3e17e7
 
 **Inquiry LLM** is an innovative AI-driven platform designed to foster dynamic and insightful learning through insightful exchanges between two language models. The project features two AI chatbots that collaborate to enhance the user’s understanding of complex topics.
 
