@@ -2,6 +2,7 @@
 
 https://github.com/user-attachments/assets/f7dc4ef4-67bf-485d-a060-8ae84f3e17e7
 
+## What is Inquiry LLM?
 **Inquiry LLM** is an innovative AI-driven platform designed to foster dynamic and insightful learning through insightful exchanges between two language models. The project features two AI chatbots that collaborate to enhance the user’s understanding of complex topics.
 
 The process starts with the user asking a question on a specific subject (e.g., math, physics, philosophy). LLM A responds with a thoughtful and accurate answer, and LLM B follows up with an insightful, probing question or comment that deepens the discussion. Then, LLM A answers LLM B's new inquiry thoroughly, and this process continues. This back-and-forth exchange simulates a true Socratic dialogue, encouraging exploration and critical thinking to understand any concept at a much deeper level.
