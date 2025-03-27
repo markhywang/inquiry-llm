@@ -3,7 +3,6 @@ document.addEventListener('DOMContentLoaded', () => {
     var newInquiry = document.getElementById('new-inquiry');
     var generateDisplay = document.getElementById('generate-display');
 
-    // Make sure inquiry is not empty when submitting form
     inquiryForm.addEventListener('submit', function(event) {
         event.preventDefault();  // Prevent the default form submission
 
@@ -36,38 +35,69 @@ document.addEventListener('DOMContentLoaded', () => {
                     content: content.value,
                     numInsights: numInsights
                 })
-            })
-            .then(response => response.json())
-            .then(data =>  {
-                // Display screen on text
-                for (let i = 0; i < data.responses.length; i++) {
-                    let rawText = data.responses[i];  // Store raw text
-                    let cardClass = (i % 2 == 0) ? "answer-card" : "inquiry-card";
-                    let modelName = (i % 2 == 0) ? "LLM A" : "LLM B";
+            }).then(response => {
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                // Object to accumulate text per round
+                let roundsText = {};
 
-                    // Ensure LaTeX is properly wrapped if necessary
-                    rawText = rawText.replace(/\$\$(.*?)\$\$/g, "<span class='math'>$$$1$$</span>"); // Block math
-                    rawText = rawText.replace(/\\\((.*?)\\\)/g, "<span class='math'>\\($1\\)</span>"); // Inline math
-
-                    generateDisplay.innerHTML += `
-                        <div class="card ${cardClass}" style="display: none;">
-                            <h2>${modelName}</h2>
-                            <p data-text="${encodeURIComponent(rawText)}"></p>
-                        </div>`;
+                function processText(text) {
+                    // Each line should be a complete JSON object
+                    let lines = text.split("\n");
+                    // The last element may be an incomplete line; keep it in the buffer
+                    buffer = lines.pop();
+                    lines.forEach(line => {
+                        if (line.trim()) {
+                            let data = JSON.parse(line);
+                            // When a new round starts, create a new card
+                            if (data.start) {
+                                let cardClass = (data.model === "LLM A") ? "answer-card" : "inquiry-card";
+                                generateDisplay.innerHTML += `
+                                    <div class="card ${cardClass}" id="card-${data.round}" style="display: block;">
+                                        <h2>${data.model}</h2>
+                                        <p></p>
+                                    </div>`;
+                                roundsText[data.round] = "";
+                            }
+                            if (data.token) {
+                                roundsText[data.round] += data.token;
+                                let card = document.getElementById(`card-${data.round}`);
+                                if (card) {
+                                    let p = card.querySelector("p");
+                                    // Process the accumulated text: first replace LaTeX markers,
+                                    // then parse Markdown so both are rendered correctly.
+                                    let updatedText = roundsText[data.round]
+                                        .replace(/\$\$(.*?)\$\$/g, "<span class='math'>$$$1$$</span>")
+                                        .replace(/\\\((.*?)\\\)/g, "<span class='math'>\\($1\\)</span>");
+                                    // Parse Markdown into HTML
+                                    updatedText = marked.parse(updatedText);
+                                    p.innerHTML = updatedText;
+                                    // Render LaTeX/math (if you use KaTeX or similar)
+                                    renderMathInElement(p);
+                                }
+                            }
+                        }
+                    });
                 }
 
-                renderMathInElement(document.body);
-
-                let cards = document.querySelectorAll(".card");
-                typeSequentially(cards);
-
-                // Show button to allow user to re-input a separate prompt
-                newInquiry.style.display = 'inline-block';
+                function read() {
+                    reader.read().then(({done, value}) => {
+                        if (done) {
+                            newInquiry.style.display = 'inline-block';
+                            return;
+                        }
+                        buffer += decoder.decode(value, {stream: true});
+                        processText(buffer);
+                        read();
+                    });
+                }
+                read();
             });
         }
     });
 
-    // Typing animation for each LLM card
+    // Retain your original typing animation functions in case you want to use them elsewhere.
     const typeText = (element, rawText, callback) => {
         let index = 0;
         const decodedText = decodeURIComponent(rawText); // Decode special characters
@@ -91,7 +121,6 @@ document.addEventListener('DOMContentLoaded', () => {
         typing();
     };
 
-    // Make sure subsequent cards only appear after previous card is done typing
     const typeSequentially = (cards, index = 0) => {
         if (index >= cards.length) return; // Stop when all cards are done
 
@@ -106,12 +135,10 @@ document.addEventListener('DOMContentLoaded', () => {
         typeText(textElement, rawText, () => typeSequentially(cards, index + 1));
     };
 
-    // When "New Inquiry" button is clicked, refresh to a clean index.html
     newInquiry.addEventListener("click", () => {
         newInquiry.style.display = 'none';
         generateDisplay.innerHTML = "";
         generateDisplay.style.display = 'none';
-
         window.location.href = '/';
     });
 });

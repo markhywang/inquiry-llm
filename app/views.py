@@ -1,10 +1,8 @@
 import json
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
-from django.shortcuts import render
-
-from .llm import generate_responses
+from django.http import StreamingHttpResponse, JsonResponse
+from .llm import generate_responses_stream
 from .models import Inquiry
 
 
@@ -18,21 +16,18 @@ def generate(request):
         return JsonResponse({"error": "Bad request."}, status=400)
     
     data = json.loads(request.body)
-    print(data)
-    
-    # filter body to remove any unnecessary new lines
+
+    # Filter out any empty lines from the prompt
     content = '\n'.join(filter(lambda line: line.strip() != '', data.get('content').split('\n')))
-    
-    # Get number of rounds based on number of insights requested
     rounds = 3 + int(data.get('numInsights', '1')) * 2
     
-    # Save this inquiry inside the database
-    inquiry = Inquiry(
-        prompt=content,
-        rounds=rounds
-    )
+    # Save the inquiry in the database
+    inquiry = Inquiry(prompt=content, rounds=rounds)
     inquiry.save()
     
-    # Get the generated responses from the LLMs
-    responses = generate_responses(initial_prompt=content, rounds=rounds)
-    return JsonResponse({'responses' : responses}, safe=False)
+    def event_stream():
+        for chunk in generate_responses_stream(initial_prompt=content, rounds=rounds):
+            yield chunk
+    
+    # Set the content type to text/event-stream for streaming
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')

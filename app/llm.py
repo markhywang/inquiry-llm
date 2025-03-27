@@ -1,3 +1,4 @@
+import json
 from openai import OpenAI
 from .models import Response
 from dotenv import dotenv_values
@@ -6,100 +7,128 @@ from dotenv import dotenv_values
 CONFIG = dotenv_values(".env")
 client = OpenAI(api_key=CONFIG['OPENAI_API_KEY'])
 
-# Keep track of all messages
 llm_answer_messages = []
 llm_insight_messages = []
 responses = []
 
-
-# Initialize the role of the system
 def init() -> None:
-    """Establish the roles of both LLMs so adjust them to their specified roles"""
+    """Initialize the conversation roles."""
     global llm_answer_messages, llm_insight_messages, responses
-    
     llm_answer_messages = []
     llm_insight_messages = []
     responses = []
     
-    llm_answer_role = "You are an AI that answers questions concisely and accurately while also being thorough in your explanations. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
-    llm_insight_role = "You are an AI that responds with insightful and thought-provoking follow-up questions or comments to deepen the understanding of a certain topic. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+    llm_answer_role = (
+        "You are an AI that answers questions concisely and accurately while also being thorough in your explanations. "
+        "Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+    )
+    llm_insight_role = (
+        "You are an AI that responds with insightful and thought-provoking follow-up questions or comments to deepen the understanding of a certain topic. "
+        "Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+    )
     
     llm_answer_messages.append({"role": "system", "content": llm_answer_role})
     llm_insight_messages.append({"role": "system", "content": llm_insight_role})
 
-
-# Function for LLM that answers questions
-def llm_answer_inference(question: str) -> str:
-    """This LLM answers questions either given by the user or by the other LLM"""
+def llm_answer_inference_stream(question: str):
+    """Stream the answer output token by token."""
     llm_answer_messages.append({"role": "user", "content": question})
-    
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=llm_answer_messages
+        messages=llm_answer_messages,
+        stream=True
     )
-    
-    answer = response.choices[0].message.content.strip()
-    # Save response in database
-    response_data = Response(is_answer=True, content=answer)
-    response_data.save()
-    
-    return answer
-    
+    for chunk in response:
+        token = getattr(chunk.choices[0].delta, "content", "")
+        if token:
+            yield token
 
-# Function for LLM that gives insightful comments
-def llm_insight_inference(answer: str) -> str:
-    """This LLM gives insightful follow-ups to help the user further deepen their understanding of a particular topic"""
+def llm_insight_inference_stream(answer: str):
+    """Stream the insightful follow-up output token by token."""
     insight_message = f"Here is an answer to consider when generating insightful and thought-provoking follow-up questions: {answer}"
     llm_insight_messages.append({"role": "user", "content": insight_message})
-    
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=llm_insight_messages
+        messages=llm_insight_messages,
+        stream=True
     )
-    
-    insight = response.choices[0].message.content.strip()
+    for chunk in response:
+        token = getattr(chunk.choices[0].delta, "content", "")
+        if token:
+            yield token
 
-    # Save response in database
-    response_data = Response(is_answer=False, content=insight)
-    response_data.save()
-    
-    return insight
-
-
-# Function for generation of conversation between the two LLMs
-def generate_responses(initial_prompt: str, rounds) -> list[str]:
+def generate_responses_stream(initial_prompt: str, rounds: int):
+    """
+    Generator that yields each token (wrapped as JSON) as soon as it is received.
+    Each round is prefixed by a JSON object with "start": true to signal a new round.
+    """
     init()
-    
     current_prompt = initial_prompt
-    current_answer = None
+    current_answer = ""
     
+    # Alternate rounds: even rounds (LLM A) answer, odd rounds (LLM B) insight.
     for i in range(rounds - 2):
         if i % 2 == 0:
-            current_answer = llm_answer_inference(current_prompt)
-            responses.append(current_answer)
+            # LLM A answer round
+            yield json.dumps({"model": "LLM A", "round": i, "start": True}) + "\n"
+            for token in llm_answer_inference_stream(current_prompt):
+                current_answer += token
+                yield json.dumps({"model": "LLM A", "round": i, "token": token}) + "\n"
         else:
-            current_prompt = llm_insight_inference(current_answer)
-            responses.append(current_prompt)
-            
-    # The last two rounds: Thank you and closing messages
-    thank_you_message = client.chat.completions.create(
+            # LLM B insight round
+            yield json.dumps({"model": "LLM B", "round": i, "start": True}) + "\n"
+            current_prompt = ""
+            for token in llm_insight_inference_stream(current_answer):
+                current_prompt += token
+                yield json.dumps({"model": "LLM B", "round": i, "token": token}) + "\n"
+    
+    # Determine the model of the last round in the loop
+    # (range(rounds-2) produces rounds indices 0 ... rounds-3)
+    last_round_index = rounds - 3  # last round index produced by loop
+    last_model = "LLM A" if (last_round_index % 2 == 0) else "LLM B"
+    
+    # Alternate the thank-you and closing models based on last round:
+    if last_model == "LLM A":
+        thank_you_model = "LLM B"
+        closing_model = "LLM A"
+    else:
+        thank_you_model = "LLM A"
+        closing_model = "LLM B"
+    
+    # Thank-you message
+    thank_you_stream = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an AI that thanks and appreciates the other AI for answering all of your inquiries. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."},
+            {"role": "system", "content": (
+                "You are an AI that thanks and appreciates the other AI for answering all of your inquiries. "
+                "Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+            )},
             {"role": "user", "content": llm_answer_messages[-1]["content"]}
-        ]
+        ],
+        stream=True
     )
-    thank_you_text = thank_you_message.choices[0].message.content.strip()
-    responses.append(thank_you_text)
+    yield json.dumps({"model": thank_you_model, "round": rounds - 2, "start": True}) + "\n"
+    thank_you_text = ""
+    for chunk in thank_you_stream:
+        token = getattr(chunk.choices[0].delta, "content", "")
+        if token:
+            thank_you_text += token
+            yield json.dumps({"model": thank_you_model, "round": rounds - 2, "token": token}) + "\n"
     
-    closing_message = client.chat.completions.create(
+    # Closing message
+    closing_stream = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
-            {"role": "system", "content": "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully. Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."},
+            {"role": "system", "content": (
+                "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully. "
+                "Ensure the output doesn't exceed 1000 characters. If applicable, format any mathematical expressions using LaTeX."
+            )},
             {"role": "user", "content": thank_you_text}
-        ]
+        ],
+        stream=True
     )
-    closing_text = closing_message.choices[0].message.content.strip()
-    responses.append(closing_text)
-    
-    return responses
+    yield json.dumps({"model": closing_model, "round": rounds - 1, "start": True}) + "\n"
+    for chunk in closing_stream:
+        token = getattr(chunk.choices[0].delta, "content", "")
+        if token:
+            yield json.dumps({"model": closing_model, "round": rounds - 1, "token": token}) + "\n"
