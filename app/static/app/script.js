@@ -84,6 +84,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 function read() {
                     reader.read().then(({done, value}) => {
                         if (done) {
+                            // Process any remaining buffered text
+                            if (buffer.trim()) {
+                                processText(buffer);
+                                buffer = '';
+                            }
+
                             newInquiry.style.display = 'inline-block';
                             return;
                         }
