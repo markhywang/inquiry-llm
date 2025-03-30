@@ -4,6 +4,11 @@ from dotenv import dotenv_values
 
 # Load API key from .env file
 CONFIG = dotenv_values(".env")
+OPENAI_MODEL = "gpt-4o-mini"
+OPENAI_TOOLS = [
+    {"type": "web_search_preview"}
+]
+
 client = OpenAI(api_key=CONFIG['OPENAI_API_KEY'])
 
 llm_answer_messages = []
@@ -44,7 +49,8 @@ def llm_answer_inference_stream(question: str):
     """Stream the answer output token by token."""
     llm_answer_messages.append({"role": "user", "content": question})
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL,
+        tools=OPENAI_TOOLS,
         input=llm_answer_messages,
         stream=True
     )
@@ -62,7 +68,8 @@ def llm_insight_inference_stream(answer: str):
     )
     llm_insight_messages.append({"role": "user", "content": insight_message})
     response = client.responses.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL,
+        tools=OPENAI_TOOLS,
         input=llm_insight_messages,
         stream=True
     )
@@ -113,7 +120,8 @@ def generate_responses_stream(initial_prompt: str, rounds: int):
     
     # Thank-you message
     thank_you_stream = client.responses.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL,
+        tools=OPENAI_TOOLS,
         input=[
             {"role": "system", "content": (
                 "You are an AI that thanks and appreciates the other AI for answering all of your inquiries. "
@@ -133,7 +141,8 @@ def generate_responses_stream(initial_prompt: str, rounds: int):
     
     # Closing message
     closing_stream = client.responses.create(
-        model="gpt-4o-mini",
+        model=OPENAI_MODEL,
+        tools=OPENAI_TOOLS,
         input=[
             {"role": "system", "content": (
                 "You are an AI that responds politely to a thank-you message, acknowledging it and closing the conversation gracefully. "
