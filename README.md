@@ -22,7 +22,7 @@ Inquiry LLM stands out as a unique educational tool that transforms passive info
 I am planning to update Inquiry LLM from time to time, which includes implementing new features which will further help users better learn any concept or idea they have in mind.
 
 Some features I plan to add are as follows:
-- The ability to attach images, files, video, audio, etc.
+- The ability to attach images, files, video, audio, etc. (Update: Done!)
 - Different fine-tuned and aligned models for different educational domains (e.g. a pair of LLMs focused on physics and a different pair focused on, for example, history).
 - Interactive visualizations throughout the dialogue, which includes the incorporation of diagrams, graphs, charts, etc. when necessary.
 - Conversation summarization

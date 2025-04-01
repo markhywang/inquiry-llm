@@ -1,6 +1,10 @@
 from django.db import models
 
 
+class Document(models.Model):
+    docfile = models.FileField(upload_to='documents/%Y/%m/%d')
+
+
 class Inquiry(models.Model):
     inquiry_id = models.AutoField(
         primary_key=True

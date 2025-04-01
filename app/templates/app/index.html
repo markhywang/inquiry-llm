@@ -12,7 +12,7 @@
     <h2>Learn through AI-powered insights that will enhance your understanding of any topic.</h2>
 
     <div class="prompt-div mx-auto col-10 col-md-8 col-lg-6">
-        <form class="custom-form" id="inquiry-form">
+        <form class="custom-form" id="inquiry-form" enctype="multipart/form-data">
             {% csrf_token %}
 
             <div class="row mb-3" style="margin-bottom: 15px !important">
@@ -21,6 +21,10 @@
 
             <div class="alert row mb-3" style="display: none; text-align: left;" id="alert-message">
                 <strong>Please enter an inquiry.</strong>
+            </div>
+
+            <div style="margin-top: 25px; margin-bottom: 25px;">
+                <input type="file" id="inquiry-file" name="uploaded_file">
             </div>
 
             <div>

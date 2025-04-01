@@ -6,14 +6,15 @@ document.addEventListener('DOMContentLoaded', () => {
     inquiryForm.addEventListener('submit', function(event) {
         event.preventDefault();  // Prevent the default form submission
 
-        // Get the value of the textarea
+        // Get the value of the textarea and file
         const content = document.getElementById('inquiry-content');
+        const fileInput = document.getElementById('inquiry-file').files[0];
 
         // Get the value of the selected radio button
         const numInsights = document.querySelector("input[type='radio'][name='num-insights']:checked").value;
         var errorMessage = document.getElementById('alert-message');
 
-        if (!content.value.trim()) {
+        if (!fileInput && !content.value.trim()) {
             console.log("Form submitted incorrectly.");
             content.style.borderColor = 'red';
             errorMessage.style.display = 'block';
@@ -25,16 +26,22 @@ document.addEventListener('DOMContentLoaded', () => {
             newInquiry.style.display = 'none';
             generateDisplay.innerHTML = "";
 
+            let formData = new FormData();
+            formData.append('content', content.value);
+            formData.append('rounds', numInsights);
+            formData.append('docfile', fileInput);
+
+            for (let pair of formData.entries()) {
+                console.log(pair[0], pair[1]);
+            }
+
+            console.log("Form submitted correctly.");
             console.log(`Content: ${content.value}`);
-            console.log(`numInsights: ${numInsights}`);
+            console.log(`File: ${fileInput}`);
 
             fetch('/generate', {
                 method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    content: content.value,
-                    numInsights: numInsights
-                })
+                body: formData
             }).then(response => {
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();

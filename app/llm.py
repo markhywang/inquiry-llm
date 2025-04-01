@@ -1,6 +1,9 @@
 import json
 from openai import OpenAI
 from dotenv import dotenv_values
+from fpdf import FPDF
+from docx import Document
+import pandas as pd
 
 # Load API key from .env file
 CONFIG = dotenv_values(".env")
@@ -34,6 +37,32 @@ def init() -> None:
     llm_answer_messages.append({"role": "system", "content": llm_answer_role})
     llm_insight_messages.append({"role": "system", "content": llm_insight_role})
 
+def convert_to_pdf(input_path):
+    """Convert .txt, .csv, or .docx to a .pdf file."""
+    pdf_path = input_path.rsplit('.', 1)[0] + ".pdf"
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    
+    if input_path.endswith(".txt"):
+        with open(input_path, "r", encoding="utf-8") as file:
+            for line in file:
+                pdf.cell(200, 10, txt=line.strip(), ln=True)
+    elif input_path.endswith(".csv"):
+        df = pd.read_csv(input_path)
+        for _, row in df.iterrows():
+            pdf.cell(200, 10, txt=str(row.to_dict()), ln=True)
+    elif input_path.endswith(".docx"):
+        doc = Document(input_path)
+        for para in doc.paragraphs:
+            pdf.cell(200, 10, txt=para.text, ln=True)
+    else:
+        return input_path  # If it's already a supported format, return original file
+    
+    pdf.output(pdf_path)
+    return pdf_path
+
 def extract_token(chunk):
     """Safely extract token content from a streaming chunk."""
     delta = getattr(chunk, "delta", None)
@@ -45,9 +74,37 @@ def extract_token(chunk):
 
     return ""
 
-def llm_answer_inference_stream(question: str):
+def llm_answer_inference_stream(question: str, data_file):
     """Stream the answer output token by token."""
-    llm_answer_messages.append({"role": "user", "content": question})
+    if data_file is None:
+        llm_answer_messages.append(
+            {
+                "role": "user", 
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": question,
+                    },
+                ]
+            }
+        )
+    else:
+        llm_answer_messages.append(
+            {
+                "role": "user", 
+                "content": [
+                    {
+                        "type": "input_file",
+                        "file_id": data_file.id,
+                    },
+                    {
+                        "type": "input_text",
+                        "text": question,
+                    },
+                ]
+            }
+        )
+
     response = client.responses.create(
         model=OPENAI_MODEL,
         tools=OPENAI_TOOLS,
@@ -79,12 +136,24 @@ def llm_insight_inference_stream(answer: str):
         if token:
             yield token
 
-def generate_responses_stream(initial_prompt: str, rounds: int):
+def generate_responses_stream(initial_prompt: str, rounds: int, file_path):
     """
     Generator that yields each token (wrapped as JSON) as soon as it is received.
     Each round is prefixed by a JSON object with "start": true to signal a new round.
     """
     init()
+    
+    if file_path is None:
+        data_file = None
+    else:
+        if not file_path.endswith(".pdf"):  # Convert if needed
+            file_path = convert_to_pdf(file_path)
+        
+        data_file = client.files.create(
+            file=open(file_path, "rb"),
+            purpose="user_data"
+        )
+    
     current_prompt = initial_prompt
     current_answer = ""
     
@@ -94,7 +163,7 @@ def generate_responses_stream(initial_prompt: str, rounds: int):
             # LLM A answer round
             yield json.dumps({"model": "LLM A", "round": i, "start": True}) + "\n"
 
-            for token in llm_answer_inference_stream(current_prompt):
+            for token in llm_answer_inference_stream(current_prompt, data_file):
                 current_answer += token
                 yield json.dumps({"model": "LLM A", "round": i, "token": token}) + "\n"
         else:

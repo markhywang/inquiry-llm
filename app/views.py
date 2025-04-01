@@ -1,9 +1,10 @@
-import json
-from django.shortcuts import render
+import os
+from django.conf import settings
+from django.shortcuts import redirect, render
 from django.views.decorators.csrf import csrf_exempt
 from django.http import StreamingHttpResponse, JsonResponse
 from .llm import generate_responses_stream
-from .models import Inquiry
+from .models import *
 
 
 def index(request):
@@ -15,18 +16,21 @@ def generate(request):
     if request.method != "POST":
         return JsonResponse({"error": "Bad request."}, status=400)
     
-    data = json.loads(request.body)
+    content = request.POST.get('content', '').strip()
+    file = request.FILES.get('docfile')
+    rounds = 3 + int(request.POST.get('rounds', '')) * 2
 
-    # Filter out any empty lines from the prompt
-    content = '\n'.join(filter(lambda line: line.strip() != '', data.get('content').split('\n')))
-    rounds = 3 + int(data.get('numInsights', '1')) * 2
-    
-    # Save the inquiry in the database
-    inquiry = Inquiry(prompt=content, rounds=rounds)
-    inquiry.save()
+    uploaded_file_path = None
+    if file:
+        newdoc = Document(docfile=file)
+        newdoc.save()
+        uploaded_file_path = os.path.join(settings.MEDIA_ROOT, newdoc.docfile.name)
+
+    print(f"Content: {content}")
+    print(f"Uploaded File: {uploaded_file_path if file else 'No file uploaded'}")
     
     def event_stream():
-        for chunk in generate_responses_stream(initial_prompt=content, rounds=rounds):
+        for chunk in generate_responses_stream(initial_prompt=content, rounds=rounds, file_path=uploaded_file_path):
             yield chunk
     
     # Set the content type to text/event-stream for streaming
